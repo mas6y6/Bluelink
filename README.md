@@ -13,5 +13,3 @@ Bluelink can open SSH tunnels between servers so you can connect without making 
 # Progress
 
 Coming soon
-
-https://google.com
