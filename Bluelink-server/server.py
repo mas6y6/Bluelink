@@ -106,6 +106,12 @@ def handler(websocket: ServerConnection):
                     cursor.execute("SELECT COUNT(*) FROM users WHERE username = ?", (username))
                     count = cursor.fetchone()[0]
                     if count > 0:
+                        cursor.execute('''
+                            SELECT username, uuid, hashed_password 
+                            FROM users 
+                            WHERE username = ?
+                        ''', (username))
+                        userdata = cursor.fetchone()
                         _send_json({"type":"password","message":"password"})
                         break
                     else:
@@ -114,7 +120,10 @@ def handler(websocket: ServerConnection):
                 attempts = 3
                 while True:
                     returndata = _recv_json()
-                    
+                    if bcrypt.checkpw(returndata["password"],userdata[3]):
+                        _send_json({"type":"signin","message":"authencated"})
+                    else:
+                        _send_json({"type":"signin","message":f"password*retry*{attempts}"})
             else:
                 _send_json({"type":"error","message":"Illegal operation. Terminating Connection"})
                 websocket.close()
@@ -123,8 +132,9 @@ def handler(websocket: ServerConnection):
         else:
             pass
     try:
-        connectedclients.append(websocket)
-        connectioncache[str(websocket.id)] = {}
+        if authicated:
+            connectedclients.append(websocket)
+            connectioncache[str(websocket.id)] = {}
         
         #Actual connection here
         pass
